@@ -36,7 +36,7 @@
          (get-in data [:data :stations])
          :fetching-stations nil))
 
-(defn handle-stations-error [_]
+(defn handle-stations-error [app-state _]
   (assoc app-state :error-stations true :fetching-stations nil))
 
 (defn stations []
@@ -49,10 +49,11 @@
   (merge station (station-status (str station_id))))
 
 (defn render-station [{:keys [name num_bikes_available num_docks_available] :as station}]
-  ^{:key (:station_id station)} [:tr
-                                 [:td name]
-                                 [:td num_bikes_available]
-                                 [:td num_docks_available]])
+  ^{:key (:station_id station)}
+  [:tr
+   [:td name]
+   [:td num_bikes_available]
+   [:td num_docks_available]])
 
 (defn render-stations [{:keys [stations station-status]}]
   [:table.bike-table
@@ -60,8 +61,8 @@
     [:tr
      [:th "Stasjon"] [:th "Ledige sykler"] [:th "Ledige plasser"]]]
    [:tbody
-    (doall (for [s (sort-by :name stations)]
-             (render-station (station-info station-status s))))]])
+    (for [s (sort-by :name stations)]
+      (render-station (station-info station-status s)))]])
 
 (defn city-bike []
   (let [state @app-state]

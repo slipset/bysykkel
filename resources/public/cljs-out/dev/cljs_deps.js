@@ -51,9 +51,6 @@ goog.addDependency("../bysykkel/core.js", ['bysykkel.core'], ['goog.dom', 'reage
 goog.addDependency("../cljs/test.js", ['cljs.test'], ['cljs.core', 'cljs.pprint', 'clojure.string']);
 goog.addDependency("../figwheel/main/async_result.js", ['figwheel.main.async_result'], ['cljs.core', 'figwheel.repl']);
 goog.addDependency("../figwheel/main/testing.js", ['figwheel.main.testing'], ['goog.dom', 'cljs.core', 'cljs.test', 'clojure.string', 'figwheel.main.async_result']);
-goog.addDependency("../cljs_test_display/favicon.js", ['cljs_test_display.favicon'], ['goog.dom', 'cljs.core', 'goog.object', 'clojure.string']);
-goog.addDependency("../cljs_test_display/notify.js", ['cljs_test_display.notify'], ['cljs.core', 'goog.object', 'cljs_test_display.favicon']);
-goog.addDependency("../cljs_test_display/core.js", ['cljs_test_display.core'], ['goog.dom', 'goog.dom.classlist', 'cljs_test_display.notify', 'cljs.core', 'cljs.test', 'goog.events.EventType', 'cljs_test_display.favicon', 'clojure.string', 'goog.events.KeyCodes', 'goog.events']);
 goog.addDependency("../bysykkel/core_test.js", ['bysykkel.core_test'], ['cljs.core', 'cljs.test']);
 goog.addDependency("../bysykkel/test_runner.js", ['bysykkel.test_runner'], ['bysykkel.core_test', 'cljs.core', 'figwheel.main.testing']);
-goog.addDependency("../figwheel/main/generated/dev_auto_test_runner.js", ['figwheel.main.generated.dev_auto_test_runner'], ['bysykkel.core_test', 'cljs.core', 'cljs.test', 'cljs_test_display.core']);
+goog.addDependency("../figwheel/main/generated/dev_auto_test_runner.js", ['figwheel.main.generated.dev_auto_test_runner'], ['cljs.core', 'figwheel.main.testing']);

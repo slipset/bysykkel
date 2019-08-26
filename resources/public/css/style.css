@@ -3,6 +3,7 @@
     border: solid 1px #DDEEEE;
     border-collapse: collapse;
     border-spacing: 0;
+    width: 100%;
     font: normal 13px Arial, sans-serif;
 }
 .bike-table thead th {

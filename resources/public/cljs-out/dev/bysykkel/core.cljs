@@ -3,6 +3,7 @@
    [goog.dom :as gdom]
    [reagent.core :as reagent :refer [atom]]))
 
+
 (defonce app-state (atom {}))
 
 (def base-url "https://gbfs.urbansharing.com/oslobysykkel.no")
@@ -48,7 +49,20 @@
 (defn station-info [station-status {:keys [station_id] :as station}]
   (merge station (station-status (str station_id))))
 
-(defn render-station [{:keys [name num_bikes_available num_docks_available] :as station}]
+(defn render-station [{:keys [name num_bikes_available num_docks_available lat lon] :as station}]
+  (let [lat-lon (clj->js {:lat (js/parseFloat  lat) :lng(js/parseFloat lon)})
+        info-window (js/google.maps.InfoWindow. (clj->js {:content (str "<div>"
+                                                                        "<h3>" name "</h3>"
+                                                                        "<div>Ledige sykler: " num_bikes_available "</div>"
+                                                                        "<div>Ledige plasser: " num_docks_available "</div>"
+                                                                        "</div>")}))
+        marker (js/google.maps.Marker. (clj->js {:position lat-lon
+                                                 :map (:map @app-state)
+                                                 :title name}))]
+    (.addListener marker "click" (fn [_] (let [map (:map @app-state)]
+                                                 (.setZoom map 16)
+                                                 (.setCenter map (.getPosition marker))
+                                                 (.open info-window map marker)))))
   ^{:key (:station_id station)}
   [:tr
    [:td name]
@@ -64,6 +78,20 @@
     (for [s (sort-by :name stations)]
       (render-station (station-info station-status s)))]])
 
+(defn home-did-mount [this]
+  (let [map-canvas (reagent/dom-node this)
+        map-options (clj->js {"center" (js/google.maps.LatLng. 59.911491, 10.757933)
+                              "zoom" 12})]
+    (swap! app-state assoc :map (js/google.maps.Map. map-canvas map-options))))
+
+(defn home-render []
+  [:div {:style {:height "600px"}}])
+
+(defn home []
+  (reagent/create-class {:reagent-render home-render
+                         :component-did-mount home-did-mount}))
+
+
 (defn city-bike []
   (let [state @app-state]
     [:div
@@ -75,7 +103,10 @@
            (:error-status state)
            [:div "Error fetching station-status"]
            :else
-           (render-stations state))]))
+           [:div
+            [home]
+            (render-stations state)])]))
+
 
 (defn get-app-element []
   (gdom/getElement "app"))

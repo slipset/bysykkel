@@ -22,7 +22,10 @@
 
 (defn calculate-station-info [stations station-status]
   (when (and (seq stations) (seq station-status))
-    (map (partial station-info station-status) stations)))
+    (let [status-by-id (->> station-status
+                            (group-by :station_id)
+                            (reduce-kv (fn [acc k v] (assoc acc k (first v))) {}))]
+      (map (partial station-info status-by-id) stations))))
 
 (defn handle-station-status-error [app-state _]
   (assoc app-state :error-status true :fetching-status nil))
@@ -51,9 +54,7 @@
   (fetch-status app-state id nil nil))
 
 (defn station-status-fetched [{:keys [stations] :as app-state} data]
-  (let [station-status (->> (get-in data [:data :stations])
-              (group-by :station_id)
-              (reduce-kv (fn [acc k v] (assoc acc k (first v))) {}))]
+  (let [station-status (get-in data [:data :stations])]
     (assoc app-state
            :station-info (calculate-station-info stations station-status)
            :station-status station-status)))
@@ -61,8 +62,8 @@
 (defn stations-fetched [{:keys [station-status] :as app-state} data]
   (let [stations  (get-in data [:data :stations])]
     (assoc app-state
-           :stations stations
-           :station-info (calculate-station-info stations station-status))))
+           :station-info (calculate-station-info stations station-status)
+           :stations stations)))
 
 (defn fetch [url opts id ok]
   (swap! app-state fetch-initialized id)
@@ -111,6 +112,26 @@
            (partial zoom-to-position map))
   (.setCenter map (clj->js current-location)))
 
+(defn place-markers! [map station-info]
+  (into {}
+        (for [station station-info]
+          [(:station-id station) (marker! map (select-keys station [:position :info :name])
+                                          (partial zoom-to-position map))])))
+
+(defn map-did-mount [this]
+  (let [map-canvas (reagent/dom-node this)
+        map-options (clj->js {"center" (js/google.maps.LatLng. 59.911491, 10.757933)
+                              "zoom" 12})
+        map (js/google.maps.Map. map-canvas map-options)
+        markers (place-markers! map (:station-info @app-state))]
+    (swap! app-state add-map {:map map :markers markers})))
+
+(defn map-render []
+  [:div {:style {:height "600px"}}])
+
+(defn bike-map []
+  (reagent/create-class {:reagent-render map-render
+                         :component-did-mount map-did-mount}))
 
 (defn render-station [{:keys [station-id name bikes-available docks-available
                               position] :as station}]
@@ -134,27 +155,6 @@
     (for [s (sort-by :name stations)]
       ^{:key (:station-id s)}
       [render-station s])]])
-
-(defn place-markers! [map station-info]
-  (into {}
-        (for [station station-info]
-          [(:station-id station) (marker! map (select-keys station [:position :info :name])
-                                          (partial zoom-to-position map))])))
-
-(defn map-did-mount [this]
-  (let [map-canvas (reagent/dom-node this)
-        map-options (clj->js {"center" (js/google.maps.LatLng. 59.911491, 10.757933)
-                              "zoom" 12})
-        map (js/google.maps.Map. map-canvas map-options)
-        markers (place-markers! map (:station-info @app-state))]
-    (swap! app-state add-map {:map map :markers markers})))
-
-(defn map-render []
-  [:div {:style {:height "600px"}}])
-
-(defn bike-map []
-  (reagent/create-class {:reagent-render map-render
-                         :component-did-mount map-did-mount}))
 
 (defn city-bike []
   (let [{:keys [station-info map current-location markers] :as state} @app-state]

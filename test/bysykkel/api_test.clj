@@ -13,6 +13,7 @@
          (range 3) nil
          nil (range 3)
          [] []))
+  `
   (testing "Stations are augmented with data from station-status"
     (let [station {:station_id 1 :name "lol" :lat 1 :lon 2}
           station-status {:station_id 1 :num_bikes_available 3 :num_docks_available 1}]

@@ -24,6 +24,21 @@
    :unchanged (into {} (filter (comp unchanged :id first) old-markers))
    :remove (filter (comp remove :id) (vals old-markers))})
 
+(defn ->station-marker [click-handlers
+                        {:keys [station-id info position name selected?] :as station}]
+  {:id station-id
+   :selected? selected?
+   :info-window {:content info}
+   :marker (merge {:position position
+                   :title name})
+   :click-handlers click-handlers})
+
+(defn ->location-marker [click-handlers location]
+  {:marker {:title "Du er her"
+            :position location
+            :icon {:url "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"}}
+   :click-handlers click-handlers})
+
 (defn zoom-to-position [map marker]
   (.panTo map (.getPosition marker))
   (.setZoom map 16))
@@ -43,9 +58,7 @@
                                                        :map map
                                                        :info-window info-window)))]
 
-    (.addListener map-marker "click" (fn [e]
-                                       (.stop e)
-                                       (marker-clicked id)))
+    (.addListener map-marker "click" (fn [_] (marker-clicked id)))
 
     (when info-window
       (js/google.maps.event.addListener.
@@ -57,22 +70,6 @@
       (when info-window
         (.open info-window map map-marker)))
     [data map-marker]))
-
-(defn ->station-marker [click-handlers
-                {:keys [station-id info position name selected?] :as station}]
-  {:id station-id
-   :selected? selected?
-   :info-window {:content info}
-   :marker (merge {:position position
-                   :title name})
-   :click-handlers click-handlers})
-
-(defn ->location-marker [location]
-  {:marker {:title "Du er her"
-            :position location
-            :icon {:url "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"}}
-   :click-handlers {::marker-clicked (constantly nil)
-                    ::info-window-closed (constantly nil)}})
 
 (defn add-markers! [map-canvas markers]
   (->> markers
@@ -113,7 +110,8 @@
                                                                      (transmogrify new-markers old-markers)
                                                                      (render-markers! map-canvas))))
                                 (when location
-                                  (let [new-marker (->location-marker location)]
+                                  (let [new-marker (->location-marker {::marker-clicked (constantly nil)
+                                                                       ::info-window-closed (constantly nil)} location)]
                                     (swap! canvas update :location
                                            (fn [[value marker]]
                                              (if marker

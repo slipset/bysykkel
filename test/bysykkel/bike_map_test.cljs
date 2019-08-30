@@ -43,3 +43,22 @@
   (testing "a happy path"
     (is (= expected
            (sut/transmogrify new-markers old-markers diff)))))
+
+
+(deftest ->station-marker-test
+  (testing "happy path"
+    (is (= {:id 1
+            :selected? false
+            :info-window {:content "lol"}
+            :marker {:position 'p
+                     :title "name"}
+            :click-handlers 'click-handlers}
+           (sut/->station-marker 'click-handlers {:station-id 1 :selected? false :position 'p :name "name" :info "lol"})))))
+
+(deftest ->location-marker-test
+  (testing "happy path"
+    (is (= {:marker {:position 'p
+                     :title "Du er her"
+                     :icon {:url "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"}}
+            :click-handlers 'click-handlers}
+           (sut/->location-marker 'click-handlers 'p)))))

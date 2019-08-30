@@ -2,8 +2,9 @@
 (ns bysykkel.test-runner
   (:require
     ;; require all the namespaces that you want to test
-    [bysykkel.core-test]
-    [figwheel.main.testing :refer [run-tests-async]]))
+   [bysykkel.core-test]
+   [bysykkel.bike-map-test]
+   [figwheel.main.testing :refer [run-tests-async]]))
 
 (defn -main [& args]
   (run-tests-async 5000))

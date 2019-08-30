@@ -72,9 +72,8 @@
 (defn render-station [{:keys [station-id name bikes-available docks-available
                               position selected?] :as station}]
   [:tr {:on-click (fn [_] (handle-toggle-station station-id))
-        :style (merge {:cursor "pointer"}
-                      (when selected?
-                        {:background-color "#FFF8DC"}))}
+        :style {:cursor "pointer"}
+        :class (when selected? ["selected"])}
    [:td name]
    [:td bikes-available]
    [:td docks-available]])
@@ -96,7 +95,8 @@
   (let [{:keys [stations current-location] :as state} @app-state]
     [:div
      [bike-map/bike-map
-      stations current-location
+      stations
+      current-location
       {::bike-map/renderer bike-map-renderer
        ::bike-map/marker-clicked handle-toggle-station
        ::bike-map/info-window-closed handle-toggle-station}]

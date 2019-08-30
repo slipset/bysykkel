@@ -71,7 +71,7 @@
   {:marker {:title "Du er her"
             :position location
             :icon {:url "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"}}
-   :click-handlers {::marker-clicked (fn [_ map marker] (zoom-to-position map marker))
+   :click-handlers {::marker-clicked (constantly nil)
                     ::info-window-closed (constantly nil)}})
 
 (defn add-markers! [map-canvas markers]
@@ -121,4 +121,5 @@
                                                           (get-in new-marker [:marker :position]))
                                                  (update-marker! map-canvas marker new-marker)
                                                  [value marker])
-                                               (add-marker! map-canvas new-marker))))))))})))
+                                               (do (println "adding location")
+                                                   (add-marker! map-canvas new-marker)))))))))})))

@@ -39,8 +39,11 @@
             :icon {:url "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"}}
    :click-handlers click-handlers})
 
+(defn pan-to! [map position]
+    (.panTo map position))
+
 (defn zoom-to-position [map marker]
-  (.panTo map (.getPosition marker))
+  (pan-to! map (.getPosition marker))
   (.setZoom map 16))
 
 (defn update-marker! [map old-marker {:keys [id selected?] :as data}]
@@ -64,7 +67,6 @@
       (js/google.maps.event.addListener.
        info-window "closeclick"
        (fn [] (info-window-closed id))))
-
     (when selected?
       (zoom-to-position map map-marker)
       (when info-window
@@ -88,6 +90,19 @@
   (remove-markers! remove)
   (merge (add-markers! map-canvas add) (update-markers! map-canvas update) unchanged))
 
+(defn update-location! [[value marker] map-canvas new-marker]
+  (let [location (get-in new-marker [:marker :position])]
+    (if marker
+      (if-not (= (get-in value [:marker :position])
+                 location)
+        (do
+          (pan-to! map-canvas (clj->js location))
+          (update-marker! map-canvas marker new-marker))
+        [value marker])
+      (do
+        (pan-to! map-canvas (clj->js location))
+        (add-marker! map-canvas new-marker)))))
+
 (defn bike-map [stations location handlers]
   (let [canvas (atom {:map nil :markers {} :location []})]
     (reagent/create-class
@@ -98,7 +113,7 @@
                                    map-options (clj->js {"center" (js/google.maps.LatLng. 59.911491, 10.757933)
                                                          "zoom" 12})]
                                (swap! canvas assoc :map (js/google.maps.Map. map-canvas map-options))))
-      :component-did-update (defn map-updated [this old-argv]
+      :component-did-update (fn [this old-argv]
                               (let [[_ stations location] (reagent/argv this)
                                     map-canvas (:map @canvas)
                                     new-markers (map (partial ->station-marker handlers) stations)]
@@ -112,12 +127,4 @@
                                 (when location
                                   (let [new-marker (->location-marker {::marker-clicked (constantly nil)
                                                                        ::info-window-closed (constantly nil)} location)]
-                                    (swap! canvas update :location
-                                           (fn [[value marker]]
-                                             (if marker
-                                               (if-not (= (get-in value [:marker :position])
-                                                          (get-in new-marker [:marker :position]))
-                                                 (update-marker! map-canvas marker new-marker)
-                                                 [value marker])
-                                               (do (println "adding location")
-                                                   (add-marker! map-canvas new-marker)))))))))})))
+                                    (swap! canvas update :location update-location! map-canvas new-marker)))))})))

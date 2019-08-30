@@ -62,3 +62,30 @@
                      :icon {:url "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"}}
             :click-handlers 'click-handlers}
            (sut/->location-marker 'click-handlers 'p)))))
+
+(deftest update-location-test
+  (testing "Adds marker when no marker exists"
+    (let [loc {"a" "b"}]
+      (with-redefs [sut/add-marker! (fn [m new-marker] [new-marker 'map-marker])
+                    sut/pan-to! (fn [m l]
+                                 (when (or (not= m 'map-canvas) (not= (js->clj l) loc))
+                                   (throw (js/Error.))))]
+        (let [new-marker {:marker {:position loc}}]
+          (is (= [new-marker 'map-marker]
+                 (sut/update-location! [] 'map-canvas new-marker)))))))
+  (testing "Updates marker when the new marker has new position"
+    (let [loc {"a" "b"}]
+      (with-redefs [sut/update-marker! (fn [m marker new-marker] [new-marker marker])
+                    sut/pan-to! (fn [m l]
+                                 (when (or (not= m 'map-canvas) (not= (js->clj l) loc))
+                                   (throw (js/Error.))))]
+        (let [new-marker {:marker {:position loc}}]
+          (is (= [new-marker 'marker]
+                 (sut/update-location! [{:marker {:position 'o}} 'marker] 'map-canvas new-marker)))))))
+  (testing "Changes nothing when positions are equal"
+    (with-redefs [sut/update-marker! (fn [m marker new-marker] (throw js/Error.))
+                  sut/add-marker! (fn [m new-marker] (throw js/Error.))
+                  sut/pan-to! (fn [m l] (throw (js/Error.)))]
+      (let [new-marker {:marker {:position 'p}}]
+        (is (= [new-marker 'marker]
+               (sut/update-location! [{:marker {:position 'p}} 'marker] 'map-canvas new-marker)))))))
